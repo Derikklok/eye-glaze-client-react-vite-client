@@ -1,34 +1,17 @@
 import { useState } from 'react';
-import { Calendar, TrendingDown, TrendingUp, AlertTriangle, CheckCircle, Eye, Brain, Activity, Target, Award, Zap, Clock } from 'lucide-react';
+import { Calendar, TrendingDown, TrendingUp, AlertTriangle, Target, Award, Clock, Brain, Activity } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, AreaChart, Area } from 'recharts';
+import { AnalysisResults } from '@/components/AnalysisResults';
+import { StressRecommendations } from '@/components/StressRecommendations';
 
 export function Results() {
   // We'll keep the state but mark it with underscore to indicate it's intentionally unused for now
   const [_selectedPeriod, _setSelectedPeriod] = useState('7d');
-
-  const currentReading = {
-    stressLevel: 3.2,
-    timestamp: new Date(),
-    analysis: {
-      pupilDilation: 6.5,
-      eyeMovement: 4.2,
-      blinkRate: 7.8,
-      overallStress: 3.2,
-    },
-    recommendations: [
-      'Take a 5-minute mindfulness break to reset your nervous system',
-      'Practice the 4-7-8 breathing technique for immediate stress relief',
-      'Reduce screen exposure for the next 30 minutes to rest your eyes',
-      'Consider a brief walk outdoors to boost natural mood regulators',
-      'Stay hydrated - dehydration can amplify stress responses',
-    ],
-  };
 
   const historicalData = [
     { date: 'Jan 1', stress: 4.2, mood: 6.5, energy: 7.2 },
@@ -49,24 +32,6 @@ export function Results() {
     { day: 'Sat', stress: 4.0, scans: 1, recovery: 75 },
     { day: 'Sun', stress: 3.2, scans: 2, recovery: 88 },
   ];
-
-  const getStressColor = (level: number) => {
-    if (level <= 3) return 'text-green-400';
-    if (level <= 6) return 'text-yellow-400';
-    return 'text-red-400';
-  };
-
-  const getStressLevel = (level: number) => {
-    if (level <= 3) return 'Low';
-    if (level <= 6) return 'Moderate';
-    return 'High';
-  };
-
-  const getStressBadgeVariant = (level: number) => {
-    if (level <= 3) return 'default';
-    if (level <= 6) return 'secondary';
-    return 'destructive';
-  };
 
   return (
     <div className="min-h-screen pt-28 p-4 bg-gradient-to-br from-background via-background to-primary/5">
@@ -98,127 +63,10 @@ export function Results() {
 
           <TabsContent value="current" className="space-y-8">
             {/* Current Reading */}
-            <Card className="glass-card">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center space-x-2 text-2xl">
-                      <Eye className="h-6 w-6" />
-                      <span>Latest Analysis</span>
-                    </CardTitle>
-                    <CardDescription className="text-base">
-                      {currentReading.timestamp.toLocaleString()} • Analysis ID: #EG-2024-001
-                    </CardDescription>
-                  </div>
-                  <Badge variant={getStressBadgeVariant(currentReading.stressLevel)} className="px-4 py-2 text-sm">
-                    {getStressLevel(currentReading.stressLevel)} Stress
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid lg:grid-cols-2 gap-12">
-                  {/* Stress Level Display */}
-                  <div className="space-y-8">
-                    <div className="text-center">
-                      <div className={`text-8xl font-bold ${getStressColor(currentReading.stressLevel)} mb-4`}>
-                        {currentReading.stressLevel}
-                      </div>
-                      <div className="text-xl text-muted-foreground mb-6">
-                        Stress Level (out of 10)
-                      </div>
-                      <Progress 
-                        value={currentReading.stressLevel * 10} 
-                        className="w-full h-4 mb-4"
-                      />
-                      <p className="text-sm text-muted-foreground">
-                        Your stress level is currently in the {getStressLevel(currentReading.stressLevel).toLowerCase()} range
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Analysis Metrics */}
-                  <div className="space-y-6">
-                    <h3 className="text-2xl font-semibold mb-6">Detailed Analysis</h3>
-                    <div className="space-y-6">
-                      {[
-                        { 
-                          label: 'Pupil Dilation', 
-                          value: currentReading.analysis.pupilDilation, 
-                          icon: Eye,
-                          description: 'Measures autonomic nervous system response'
-                        },
-                        { 
-                          label: 'Eye Movement', 
-                          value: currentReading.analysis.eyeMovement, 
-                          icon: Activity,
-                          description: 'Tracks micro-movements and fixation patterns'
-                        },
-                        { 
-                          label: 'Blink Rate', 
-                          value: currentReading.analysis.blinkRate, 
-                          icon: Brain,
-                          description: 'Indicates cognitive load and stress levels'
-                        },
-                      ].map((metric, index) => (
-                        <div key={index} className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                                <metric.icon className="h-5 w-5 text-primary" />
-                              </div>
-                              <div>
-                                <span className="font-medium">{metric.label}</span>
-                                <p className="text-xs text-muted-foreground">{metric.description}</p>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <span className="text-lg font-semibold">{metric.value}</span>
-                              <div className="text-xs text-muted-foreground">out of 10</div>
-                            </div>
-                          </div>
-                          <Progress value={metric.value * 10} className="w-full h-2" />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <AnalysisResults />
 
             {/* Recommendations */}
-            <Card className="glass-card">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-2xl">
-                  <Target className="h-6 w-6" />
-                  <span>Personalized Recommendations</span>
-                </CardTitle>
-                <CardDescription className="text-base">
-                  Evidence-based actions to help optimize your current stress level
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4">
-                  {currentReading.recommendations.map((rec, index) => (
-                    <Alert key={index} className="border-primary/20 bg-primary/5">
-                      <CheckCircle className="h-5 w-5 text-primary" />
-                      <AlertDescription className="text-base ml-2">
-                        {rec}
-                      </AlertDescription>
-                    </Alert>
-                  ))}
-                </div>
-                <div className="mt-6 flex gap-4">
-                  <Button className="gradient-primary glow-primary">
-                    <Zap className="w-4 h-4 mr-2" />
-                    Start Guided Session
-                  </Button>
-                  <Button variant="outline">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    Schedule Reminder
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <StressRecommendations />
           </TabsContent>
 
           <TabsContent value="trends" className="space-y-8">
