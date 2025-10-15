@@ -59,21 +59,113 @@ export function Dashboard() {
     }
   };
 
-  const handleUpload = async () => {
-    if (!selectedFile) {
+  // Function to upload image to main backend and store it
+  const handleImageUpload = async () => {
+    if (!selectedFile || !user?.email) {
       toast.error('Please select an image first');
       return;
     }
 
     setUploading(true);
-    setPrediction(null); // Clear previous prediction
+    
+    try {
+      // Create FormData for file upload to main backend
+      const formData = new FormData();
+      formData.append('username', user.email); // Use email as username
+      formData.append('image', selectedFile);
+
+      // Make API call to main backend for storage
+      const uploadResponse = await fetch('http://localhost:5174/api/upload/eye-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json();
+        throw new Error(errorData.error || errorData.message || 'Image upload failed');
+      }
+
+      const uploadResult = await uploadResponse.json();
+      
+      if (uploadResult.status === "success") {
+        // Store the upload result temporarily to use it for analysis submission
+        localStorage.setItem('latestUploadResult', JSON.stringify(uploadResult));
+        
+        // After successful upload to main backend, proceed with analysis
+        await handleAnalysis();
+      } else {
+        throw new Error(uploadResult.message || 'Image upload failed');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error(error instanceof Error ? error.message : 'Image upload failed. Please try again.');
+      setUploading(false);
+    }
+  };
+  
+  // Function to submit analysis results to main backend
+  const submitAnalysisResults = async (uploadResult: any, predictionResult: any) => {
+    if (!user?.email || !uploadResult || !predictionResult) {
+      console.error('Missing data for analysis submission');
+      return;
+    }
 
     try {
-      // Create FormData for file upload
+      // Determine if stress is detected based on prediction and probability
+      const hasStress = predictionResult.prediction === 'stress' && predictionResult.probability > 0.92;
+      
+      // Get the image URL from the upload response
+      const imageUrl = uploadResult.data?.imageUrl || uploadResult.imageUrl || '';
+      
+      // Create the analysis submission payload
+      const analysisData = {
+        username: user.email,
+        hasStress: hasStress,
+        imageUrl: imageUrl,
+        confidenceLevel: predictionResult.probability
+      };
+
+      // Submit the analysis to the main backend
+      const analysisResponse = await fetch('http://localhost:5174/api/analysis/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(analysisData),
+      });
+
+      if (!analysisResponse.ok) {
+        const errorData = await analysisResponse.json();
+        console.error('Analysis submission error:', errorData);
+        // Don't show this error to user as it's a background operation
+      } else {
+        const result = await analysisResponse.json();
+        console.log('Analysis submitted successfully:', result);
+      }
+    } catch (error) {
+      console.error('Analysis submission error:', error);
+      // Don't show this error to user as it's a background operation
+    }
+  };
+
+  // Function to analyze the image using Flask backend
+  const handleAnalysis = async () => {
+    if (!selectedFile) {
+      toast.error('Please select an image first');
+      return;
+    }
+
+    setPrediction(null); // Clear previous prediction
+    
+    // Store the upload result to use later for analysis submission
+    const uploadResultData = JSON.parse(localStorage.getItem('latestUploadResult') || '{}');
+
+    try {
+      // Create FormData for file upload to Flask backend
       const formData = new FormData();
       formData.append('image', selectedFile);
 
-      // Make API call to Flask backend
+      // Make API call to Flask backend for analysis
       const response = await fetch('http://localhost:5175/predict', {
         method: 'POST',
         body: formData,
@@ -93,18 +185,46 @@ export function Dashboard() {
       if (result.prediction === 'stress' && result.probability > 0.92) {
         toast.success('Analysis complete! Stress detected.');
       } else if (result.prediction === 'not_stress') {
-        toast.info('Analysis complete! Stress detected, but confidence is low.');
+        toast.info('Analysis complete! No significant stress detected.');
       } else {
         toast.success('Analysis complete! No stress detected.');
       }
 
+      // Submit analysis results to main backend
+      await submitAnalysisResults(uploadResultData, result);
+
       // Clear selected file
       setSelectedFile(null);
+      
+      // Clear stored upload result
+      localStorage.removeItem('latestUploadResult');
 
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error('Analysis error:', error);
       toast.error(error instanceof Error ? error.message : 'Analysis failed. Please try again.');
     } finally {
+      setUploading(false);
+    }
+  };
+  
+  // Main function to handle upload - this combines both upload and analysis
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      toast.error('Please select an image first');
+      return;
+    }
+
+    setUploading(true);
+    setPrediction(null); // Clear previous prediction
+    
+    try {
+      // First upload to main backend for storage
+      await handleImageUpload();
+      
+      // Analysis is handled within handleImageUpload for proper sequencing
+    } catch (error) {
+      console.error('Upload process error:', error);
+      toast.error(error instanceof Error ? error.message : 'Upload process failed. Please try again.');
       setUploading(false);
     }
   };
@@ -216,7 +336,7 @@ export function Dashboard() {
                           <div>
                             <p className="text-xl font-semibold">Drop your eye image here</p>
                             <p className="text-sm text-muted-foreground">
-                              Or click to select from your device • Supports JPG, PNG, WEBP
+                              Or click to select from your device • Supports JPG, PNG
                             </p>
                           </div>
                         </div>
