@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { UserAnalyticsCards } from '@/components/UserAnalyticsCards';
+import { UserAnalysisHistory } from '@/components/UserAnalysisHistory';
 
 export function Dashboard() {
   const { user } = useAuth();
@@ -485,78 +486,20 @@ export function Dashboard() {
           </TabsContent>
 
           <TabsContent value="overview" className="space-y-8">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Card className="glass-card">
-                <CardHeader>
-                  <CardTitle className="text-xl">Weekly Summary</CardTitle>
-                  <CardDescription>Your stress management progress</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Average Stress Level</span>
-                      <span className="font-medium">3.2/10</span>
-                    </div>
-                    <Progress value={32} className="h-2" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Improvement Rate</span>
-                      <span className="font-medium text-primary">+15%</span>
-                    </div>
-                    <Progress value={78} className="h-2" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Consistency Score</span>
-                      <span className="font-medium">85%</span>
-                    </div>
-                    <Progress value={85} className="h-2" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="glass-card">
-                <CardHeader>
-                  <CardTitle className="text-xl">Recent Activity</CardTitle>
-                  <CardDescription>Your latest analyses</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {[
-                    { time: '2 hours ago', level: 'Low', color: 'text-green-400' },
-                    { time: '1 day ago', level: 'Moderate', color: 'text-yellow-400' },
-                    { time: '2 days ago', level: 'Low', color: 'text-green-400' },
-                  ].map((item, index) => (
-                    <div key={index} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-2 h-2 rounded-full bg-primary" />
-                        <span className="text-sm">{item.time}</span>
-                      </div>
-                      <Badge variant="outline" className={item.color}>
-                        {item.level}
-                      </Badge>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              <Card className="glass-card">
-                <CardHeader>
-                  <CardTitle className="text-xl">Wellness Score</CardTitle>
-                  <CardDescription>Overall health indicator</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="text-center">
-                    <div className="text-4xl font-bold text-primary mb-2">78</div>
-                    <p className="text-sm text-muted-foreground">Excellent progress!</p>
-                  </div>
-                  <Progress value={78} className="h-3" />
-                  <p className="text-xs text-muted-foreground">
-                    You're in the top 25% of users with similar profiles. Keep up the great work!
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle className="text-2xl flex items-center gap-2">
+                  <Eye className="h-6 w-6 text-primary" />
+                  Your Analysis History
+                </CardTitle>
+                <CardDescription>
+                  View all your previous eye image analyses and stress detection results
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <UserAnalysisHistory />
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
