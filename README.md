@@ -2,6 +2,96 @@
 
 Eye Glaze is a sophisticated web application that uses eye analysis to detect stress levels in users. Built with React, TypeScript, and Tailwind CSS, it provides a modern and intuitive interface for stress monitoring and management.
 
+## ML Service Integration Guide
+
+### Accessing User Age for ML Analysis
+
+If you're working on the ML service integration and need to access the user's age for analysis, follow these steps:
+
+#### Step 1: Access User Age
+The user's age can be accessed in two ways:
+
+1. **Direct localStorage Access:**
+```typescript
+// Method 1: Direct localStorage access
+const getUserAge = () => {
+  const storedUser = localStorage.getItem('eyeGlazeUser');
+  if (storedUser) {
+    const userData = JSON.parse(storedUser);
+    return userData.age || null;
+  }
+  return null;
+};
+```
+
+2. **Using AuthContext (Recommended for React Components):**
+```typescript
+import { useAuth } from '@/contexts/AuthContext';
+
+function YourMLComponent() {
+  const { user } = useAuth();
+  const userAge = user?.age;
+  // Use userAge in your ML logic
+}
+```
+
+#### Step 2: Include Age in ML Request
+When sending data to your ML service, include the age in the request:
+
+```typescript
+// Example: Adding age to ML service request
+const sendToMLService = async (imageFile: File) => {
+  const userAge = getUserAge(); // Get age using method above
+  
+  const formData = new FormData();
+  formData.append('image', imageFile);
+  formData.append('age', userAge?.toString() || ''); // Add age to form data
+  
+  try {
+    const response = await fetch('http://localhost:5000/predict', {
+      method: 'POST',
+      body: formData
+    });
+    
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('ML Service error:', error);
+    throw error;
+  }
+};
+```
+
+#### Step 3: Handle Age in Python Backend
+In your Flask/Python ML service, access the age like this:
+
+```python
+from flask import request
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    # Get the age from the request
+    age = request.form.get('age')
+    
+    # Convert to int if age is provided
+    user_age = int(age) if age else None
+    
+    # Use age in your ML model
+    if user_age:
+        # Add age to your model's input features
+        # Your ML logic here
+        pass
+    
+    # Rest of your prediction code
+    return jsonResponse
+```
+
+#### Important Notes:
+1. Always validate age exists before using
+2. Handle cases where age might be missing
+3. Remember to convert age to string for FormData
+4. Use try-catch blocks for error handling
+
 ## Features
 
 ### Core Features
