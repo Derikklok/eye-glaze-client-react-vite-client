@@ -1,7 +1,13 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
-import { User } from '@/types';
 
-// API response interfaces to match your backend responses
+// User interface
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  age?: number;
+}
+
 interface LoginResponse {
   status: string;
   message: string;
@@ -9,6 +15,7 @@ interface LoginResponse {
     _id: string;
     username: string;
     createdAt: string;
+    age: number;
   };
 }
 
@@ -18,6 +25,7 @@ interface RegisterResponse {
   data: {
     id: string;
     username: string;
+    age: number;
     createdAt: string;
   };
 }
@@ -25,7 +33,7 @@ interface RegisterResponse {
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string, birthDate: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -75,10 +83,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       // Format user data to match our User interface
-      const newUser = {
-        id: data.data._id, // Login API returns _id
-        email: data.data.username, // Using username as email
-        name: data.data.username.split('@')[0], // Extract name from username/email
+      const newUser: User = {
+        id: data.data._id,
+        email: data.data.username,
+        name: data.data.username.split('@')[0],
+        age: data.data.age
       };
       
       setUser(newUser);
@@ -91,21 +100,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (name: string, email: string, password: string, birthDate: string) => {
     setIsLoading(true);
     try {
-      // Call the backend API for registration
       const response = await fetch('http://localhost:5174/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: email, // Using email as username for API compatibility
+          username: email,
           password,
-          // Note: The name field isn't sent as the API doesn't accept it currently
+          birthDate,
         }),
       });
+
+      const responseData = await response.json() as RegisterResponse;
+      
+      if (!response.ok || responseData.status !== 'success') {
+        const errorMsg = responseData.message || `Registration failed with status: ${response.status}`;
+        throw new Error(errorMsg);
+      }
+      
+      // Format user data to match our User interface
+      const registeredUser: User = {
+        id: responseData.data.id,
+        email: responseData.data.username,
+        name: name,
+        age: responseData.data.age
+      };
+      
+      setUser(registeredUser);
+      saveUserToStorage(registeredUser);
 
       const data = await response.json() as RegisterResponse;
       
@@ -115,10 +141,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       // Format user data to match our User interface
-      const newUser = {
+      const newUser: User = {
         id: data.data.id,
         email: data.data.username, // Using username as email
         name: name || data.data.username.split('@')[0], // Use provided name or extract from email
+        age: data.data.age // Store age from the response
       };
       
       setUser(newUser);

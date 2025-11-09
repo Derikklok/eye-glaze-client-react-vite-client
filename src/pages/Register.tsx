@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
+  birthDate: z.string().min(1, 'Birth date is required'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   confirmPassword: z.string(),
   terms: z.boolean().refine(val => val === true, 'You must accept the terms and conditions'),
@@ -43,7 +44,7 @@ export function Register() {
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      await registerUser(data.name, data.email, data.password);
+      await registerUser(data.name, data.email, data.password, data.birthDate);
       toast.success('Account created successfully! Welcome to Eye Glaze!');
       navigate('/dashboard');
     } catch (error) {
@@ -88,6 +89,21 @@ export function Register() {
                 )}
               </div>
               
+              <div className="space-y-2">
+                <Label htmlFor="birthDate" className="text-sm font-medium">Birth Date</Label>
+                <div className="relative">
+                  <Input
+                    id="birthDate"
+                    type="date"
+                    className="h-12 bg-background/50 border-border/50 focus:border-primary"
+                    {...register('birthDate')}
+                  />
+                </div>
+                {errors.birthDate && (
+                  <p className="text-sm text-destructive">{errors.birthDate.message}</p>
+                )}
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium">Email Address</Label>
                 <div className="relative">
