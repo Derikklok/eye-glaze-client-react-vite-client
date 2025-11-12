@@ -115,24 +115,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }),
       });
 
-      const responseData = await response.json() as RegisterResponse;
-      
-      if (!response.ok || responseData.status !== 'success') {
-        const errorMsg = responseData.message || `Registration failed with status: ${response.status}`;
-        throw new Error(errorMsg);
-      }
-      
-      // Format user data to match our User interface
-      const registeredUser: User = {
-        id: responseData.data.id,
-        email: responseData.data.username,
-        name: name,
-        age: responseData.data.age
-      };
-      
-      setUser(registeredUser);
-      saveUserToStorage(registeredUser);
-
       const data = await response.json() as RegisterResponse;
       
       if (!response.ok || data.status !== 'success') {
@@ -143,9 +125,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Format user data to match our User interface
       const newUser: User = {
         id: data.data.id,
-        email: data.data.username, // Using username as email
-        name: name || data.data.username.split('@')[0], // Use provided name or extract from email
-        age: data.data.age // Store age from the response
+        email: data.data.username,
+        name: name || data.data.username.split('@')[0],
+        age: data.data.age
       };
       
       setUser(newUser);
